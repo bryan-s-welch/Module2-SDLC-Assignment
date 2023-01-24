@@ -11,7 +11,6 @@ public class Analyzer {
 		while(sc.hasNext()) {
 			sb.append(sc.next());
 			System.out.println(sc.next());
-			/**test
 		}
 	}
 }
