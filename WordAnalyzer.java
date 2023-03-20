@@ -7,6 +7,7 @@ import java.util.Map;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+import javafx.scene.text.Text;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.application.Application;
@@ -19,7 +20,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
-public class Analyzer extends Application {
+public class WordAnalyzer extends Application {
 
     private Label outputLabel;
 
@@ -31,6 +32,10 @@ public class Analyzer extends Application {
     public void start(Stage primaryStage) throws Exception {
         BorderPane root = new BorderPane();
 
+        Text t = new Text();
+        t.setText("\nPress the Analyze button to see the top 20 words used in the poem 'The Raven' by Edgar Allen Poe");
+        t.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        root.setTop(t);
 
         Button analyzeButton = new Button("Analyze");
         analyzeButton.setOnAction(e -> {
@@ -48,9 +53,9 @@ public class Analyzer extends Application {
         outputLabel = new Label();
         root.setCenter(outputLabel);
         BorderPane.setAlignment(outputLabel, Pos.CENTER);
-        outputLabel.setFont(Font.font("Arial", FontWeight.BOLD,14));
+        outputLabel.setFont(Font.font("Arial",14));
 
-        Scene scene = new Scene(root, 400, 400);
+        Scene scene = new Scene(root, 665, 500);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Text Analyzer");
         primaryStage.show();
