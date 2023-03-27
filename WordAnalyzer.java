@@ -22,7 +22,8 @@ import javafx.stage.Stage;
 
 public class WordAnalyzer extends Application {
 
-    private Label outputLabel;
+    Label outputLabel;
+    Map<String, Integer> wordCount;
 
     public static void main(String[] args) {
         launch(args);
@@ -61,7 +62,11 @@ public class WordAnalyzer extends Application {
         primaryStage.show();
     }
 
-    private void analyze() throws Exception {
+    public Map<String, Integer> getWordCount() {
+        return wordCount;
+    }
+
+    void analyze() throws Exception {
         String url = "https://www.gutenberg.org/files/1065/1065-h/1065-h.htm";
 
         Document document = Jsoup.connect(url).get();
@@ -72,7 +77,7 @@ public class WordAnalyzer extends Application {
         String allText = h1 + h2 + chapter;
         String[] words = allText.split("\\s+");
 
-        Map<String, Integer> wordCount = new HashMap<>();
+        wordCount = new HashMap<>();
         for (String word : words) {
             word = word.replaceAll("[^a-zA-Z ]", "").toLowerCase();
             if (!word.isEmpty()) {
@@ -89,7 +94,10 @@ public class WordAnalyzer extends Application {
             Map.Entry<String, Integer> entry = sortedWords.get(i);
             sb.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
         }
+//        System.out.println(sb);
 
         outputLabel.setText(sb.toString());
     }
+
+
 }
