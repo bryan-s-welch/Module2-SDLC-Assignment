@@ -1,15 +1,3 @@
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-
-import javafx.scene.text.Text;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -18,7 +6,15 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
+import java.sql.*;
+import java.util.Map;
 
 public class WordAnalyzer extends Application {
 
@@ -66,6 +62,14 @@ public class WordAnalyzer extends Application {
         return wordCount;
     }
 
+    private Connection getConnection() throws SQLException {
+        String url = "jdbc:mysql://localhost:3306/word_occurrences?useSSL=false&serverTimezone=UTC";
+        String user = "root";
+        String password = "pass";
+
+        return DriverManager.getConnection(url, user, password);
+    }
+
     void analyze() throws Exception {
         String url = "https://www.gutenberg.org/files/1065/1065-h/1065-h.htm";
 
@@ -77,27 +81,50 @@ public class WordAnalyzer extends Application {
         String allText = h1 + h2 + chapter;
         String[] words = allText.split("\\s+");
 
-        wordCount = new HashMap<>();
-        for (String word : words) {
-            word = word.replaceAll("[^a-zA-Z ]", "").toLowerCase();
-            if (!word.isEmpty()) {
-                wordCount.put(word,  wordCount.getOrDefault(word, 0) + 1);
+        try (Connection connection = getConnection()) {
+            for (String word : words) {
+                word = word.replaceAll("[^a-zA-Z ]", "").toLowerCase();
+                if (!word.isEmpty()) {
+
+                    PreparedStatement checkStmt = connection.prepareStatement("SELECT count, id FROM word WHERE word = ?");
+                    checkStmt.setString(1, word);
+                    ResultSet resultSet = checkStmt.executeQuery();
+
+                    if (resultSet.next()) {
+
+                        int count = resultSet.getInt("count");
+                        int id = resultSet.getInt("id");
+                        PreparedStatement updateStmt = connection.prepareStatement("UPDATE word SET count = ? WHERE id = ?");
+                        updateStmt.setInt(1, count + 1);
+                        updateStmt.setInt(2, id);
+                        updateStmt.executeUpdate();
+                    } else {
+
+                        PreparedStatement insertStmt = connection.prepareStatement("INSERT INTO word (word, count) VALUES (?, 1)");
+                        insertStmt.setString(1, word);
+                        insertStmt.executeUpdate();
+                    }
+                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        try (Connection connection = getConnection()) {
+            PreparedStatement topWordsStmt = connection.prepareStatement("SELECT word, count FROM word ORDER BY count DESC LIMIT 20");
+            ResultSet resultSet = topWordsStmt.executeQuery();
+            StringBuilder sb = new StringBuilder("Top 20 words:\n\n");
+
+            while (resultSet.next()) {
+                String word = resultSet.getString("word");
+                int count = resultSet.getInt("count");
+                sb.append(word).append(": ").append(count).append("\n");
+            }
+
+            outputLabel.setText(sb.toString());
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
-        List<Map.Entry<String, Integer>> sortedWords = new ArrayList<>(wordCount.entrySet());
-        sortedWords.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
 
-        StringBuilder sb = new StringBuilder("Top 20 words:\n\n");
-
-        for (int i = 0; i < 20 && i < sortedWords.size(); i++) {
-            Map.Entry<String, Integer> entry = sortedWords.get(i);
-            sb.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
-        }
-//        System.out.println(sb);
-
-        outputLabel.setText(sb.toString());
     }
-
-
 }
