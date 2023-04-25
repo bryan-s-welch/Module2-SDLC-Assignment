@@ -70,7 +70,18 @@ public class WordAnalyzer extends Application {
         return DriverManager.getConnection(url, user, password);
     }
 
+    void resetWordCount() throws SQLException {
+        try (Connection connection = getConnection()) {
+            PreparedStatement resetStmt = connection.prepareStatement("UPDATE word SET count = 0");
+            resetStmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     void analyze() throws Exception {
+        resetWordCount();
         String url = "https://www.gutenberg.org/files/1065/1065-h/1065-h.htm";
 
         Document document = Jsoup.connect(url).get();
